@@ -5,22 +5,21 @@
 #include "SparkFunHTU21D.h"
 #include "Servo.h"
 #include <Ticker.h>
+#include "FS.h"
+#include <EEPROM.h>
 
 HTU21D therSense;
-
-//Download the NeoPixel library at here: https://github.com/adafruit/Adafruit_NeoPixel
 Adafruit_NeoPixel rgb = Adafruit_NeoPixel(1, 4, NEO_GRB + NEO_KHZ800);
 
-char auth[] = "";
 char ssid[] = "UCInet Mobile Access";
 char pass[] = "";
+bool configured = false;
+String authToken = "";
 
 const int EEPROM_CONFIG_FLAG_ADDRESS = 0;
 const String BLYNK_AUTH_SPIFF_FILE = "/blynk.txt";
-const String BLYNK_HOST_SPIFF_FILE = "/blynk_host.txt";
-const String BLYNK_PORT_SPIFF_FILE = "/blynk_port.txt";
+const int BLYNK_AUTH_TOKEN_SIZE = 32;
 
-BlynkTimer v9Timer;
 Ticker v9Ticker;
 const int BUTTON_PIN = 0;
 int buttonPinValue = 0;
@@ -32,13 +31,40 @@ WidgetLED ledV1(V1);
 WidgetLCD thLCD(V10);
 
 void setup() {
-  // Debug console
   Serial.begin(9600);
   rgb.begin();
   pinMode(2, INPUT_PULLUP);
-
-  Blynk.begin(auth, ssid, pass);
   therSense.begin();
+  if (!SPIFFS.begin()) {
+    Serial.println(F("Failed to initialize SPIFFS"));
+    rgb.setPixelColor(0, 0xFF0000);
+    rgb.show();
+    return;
+  }
+  rgb.setPixelColor(0, 0xFFFFFF);
+  rgb.show();
+  delay(5000);
+
+  authToken = getBlynkAuth();
+  if (authToken != "") {
+    Serial.print(F("Your current auth token is: "));
+    Serial.println(authToken);
+    configured = true;
+  }
+  if (digitalRead(BUTTON_PIN) == 0) {
+    Serial.println(F("Reset"));
+    configured = false;
+    resetEEPROM();
+    authToken = "";
+  }
+  if (!configured) {
+    rgb.setPixelColor(0, 0x0000FF);
+    rgb.show();
+    delay(3000);
+    Serial.println(F("Please enter your auth token"));
+  } else {
+    Blynk.begin(authToken.c_str(), ssid, pass);
+  }
 }
 
 BLYNK_CONNECTED() {
@@ -47,6 +73,18 @@ BLYNK_CONNECTED() {
 }
 
 void loop() {
+  if (!configured) {
+    if (Serial.available()) {
+      authToken = Serial.readString();
+      authToken.trim();
+      Serial.println(authToken);
+      writeBlynkConfig(authToken);
+      configured = true;
+      Blynk.begin(authToken.c_str(), ssid, pass);
+    }
+    return;
+  }
+
   Blynk.run();
   if (Blynk.connected()) {
     checkButton();
@@ -281,11 +319,43 @@ BLYNK_READ(V25) {
   }
 }
 
-//void resetEEPROM(void)
-//{
-//  EEPROM.write(EEPROM_CONFIG_FLAG_ADDRESS, 0);
-//  EEPROM.commit();
-//  SPIFFS.remove(BLYNK_AUTH_SPIFF_FILE);
-//  SPIFFS.remove(BLYNK_HOST_SPIFF_FILE);
-//  SPIFFS.remove(BLYNK_PORT_SPIFF_FILE);
-//}
+void writeBlynkConfig(String authToken) {
+  File authFile = SPIFFS.open(BLYNK_AUTH_SPIFF_FILE, "w");
+  if (authFile) {
+    authFile.print(authToken);
+    authFile.close();
+  } else {
+    Serial.println("Cannot write file.");
+    return;
+  }
+  Serial.println("Auth saved.");
+}
+
+String getBlynkAuth() {
+  String retAuth = "";
+  if (SPIFFS.exists(BLYNK_AUTH_SPIFF_FILE)) {
+    File authFile = SPIFFS.open(BLYNK_AUTH_SPIFF_FILE, "r");
+    if (authFile) {
+      size_t authFileSize = authFile.size();
+      // Only return auth token if it's the right size (32 bytes)
+      if (authFileSize == BLYNK_AUTH_TOKEN_SIZE) {
+        while (authFile.available()) {
+          retAuth += (char)authFile.read();
+        }
+      } else {
+        Serial.println(F("Wrong size."));
+      }
+      authFile.close();
+    }
+  }
+  else {
+    Serial.println(F("File does not exist."));
+  }
+  return retAuth;
+}
+
+void resetEEPROM() {
+  EEPROM.write(EEPROM_CONFIG_FLAG_ADDRESS, 0);
+  EEPROM.commit();
+  SPIFFS.remove(BLYNK_AUTH_SPIFF_FILE);
+}

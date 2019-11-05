@@ -103,6 +103,7 @@ void checkButton() {
   buttonPinValue = digitalRead(BUTTON_PIN);
   if (buttonPinValue != buttonPinValueOld) {
     buttonPinValueOld = buttonPinValue;
+    Serial.print(F("Button: "));
     Serial.println(buttonPinValue);
     if (buttonPinValue) {
       ledV1.off();
@@ -156,6 +157,7 @@ BLYNK_READ(V6) {
   float tempC = therSense.readTemperature();
   tempC += tempCOffset; // Add any offset
   Blynk.virtualWrite(V6, tempC);
+  Serial.println(F("TempC:V6"));
 }
 
 //TEMPERATURE_F_VIRTUAL
@@ -164,12 +166,14 @@ BLYNK_READ(V5) {
   tempC += tempCOffset;
   float tempF = tempC * 9.0 / 5.0 + 32.0;
   Blynk.virtualWrite(V5, tempF);
+  Serial.println(F("TempF:V5"));
 }
 
 //HUMIDITY_VIRTUAL
 BLYNK_READ(V7) {
   float humidity = therSense.readHumidity();
   Blynk.virtualWrite(V7, humidity);
+  Serial.println(F("Humi:V7"));
 }
 
 //ADC_VOLTAGE_VIRTUAL
@@ -177,6 +181,7 @@ BLYNK_READ(V8) {
   float adcRaw = analogRead(A0);//A0 - ADC
   float voltage = ((float)adcRaw / 1024.0) * 3.2;
   Blynk.virtualWrite(V8, voltage);
+  Serial.println(F("Vol:V8"));
 }
 
 BLYNK_WRITE(V9) {
@@ -186,6 +191,8 @@ BLYNK_WRITE(V9) {
   } else {
     v9Ticker.attach_ms(100, flashRainbow);
   }
+  Serial.print(F("V9: "));
+  Serial.println(pinValue);
 }
 
 void flashRainbow() {
@@ -336,6 +343,7 @@ BLYNK_WRITE(V16) {
 BLYNK_READ(V18) {
   int lightADC = analogRead(A0);
   Blynk.virtualWrite(V18, lightADC);
+  Serial.println(F("Light:V18"));
 }
 
 #define NOTIFICATION_LIMIT 5000
@@ -419,6 +427,7 @@ void sendEmail() {
 
 BLYNK_WRITE(V30) {
   String incoming = param.asStr();
+  Serial.print(F("V30: "));
   Serial.println(incoming);
 }
 
@@ -433,6 +442,7 @@ void checkSerialInput() {
 
 BLYNK_WRITE(V21) {
   String incoming = param.asStr();
+  Serial.print(F("V21: "));
   Serial.println(incoming);
 
   if (incoming.charAt(0) == '$') {

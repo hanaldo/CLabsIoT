@@ -236,8 +236,7 @@ void flashRainbow() {
 }
 
 BLYNK_WRITE(V11) {
-  if (param.asInt() > 0)
-  {
+  if (param.asInt() > 0) {
     float humidity = therSense.readHumidity();
     float tempC = therSense.readTemperature();
     tempC += tempCOffset;
@@ -247,6 +246,49 @@ BLYNK_WRITE(V11) {
     thLCD.clear();
     thLCD.print(0, 0, tempLine.c_str());
     thLCD.print(0, 1, humidityLine.c_str());
+  }
+}
+
+BLYNK_WRITE(V12) {
+  if (param.asInt() > 0) {
+    String firstLine = "V1: ";
+    if (digitalRead(BUTTON_PIN)) {
+      firstLine += "HIGH";
+    } else {
+      firstLine += "LOW";
+    }
+    String secondLine = "ADC0: " + String(analogRead(A0));
+    thLCD.clear();
+    thLCD.print(0, 0, firstLine.c_str());
+    thLCD.print(0, 1, secondLine.c_str());
+  }
+}
+
+BLYNK_WRITE(V13) {
+  if (param.asInt() > 0) {
+    String topLine = "RunTime";
+    String botLine = "";
+    float seconds, minutes, hours;
+    seconds = (float)millis() / 1000;
+    minutes = seconds / 60;
+    hours = minutes / 60;
+    seconds = (int)seconds % 60;
+    minutes = (int)minutes % 60;
+    if (hours < 10) {
+      botLine += "0";
+    }
+    botLine += String((int)hours) + ":";
+    if (minutes < 10) {
+      botLine += "0";
+    }
+    botLine += String((int)minutes) + ":";
+    if (seconds < 10) {
+      botLine += "0";
+    }
+    botLine += String((int)seconds);
+    thLCD.clear();
+    thLCD.print(0, 0, topLine.c_str());
+    thLCD.print(0, 1, botLine.c_str());
   }
 }
 

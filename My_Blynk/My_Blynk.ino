@@ -313,23 +313,18 @@ BLYNK_WRITE(V14) {
     myServo.write(15);
     firstServoRun = false;
   }
-  // Read in the servo value:
   int servoXIn = param[0].asInt();
   int servoYIn = param[1].asInt();
   servoX = servoXIn - 128; // Center xIn around 0 (+/-128)
   servoY = servoYIn - 128; // Center xIn around 0 (+/-128)
-
   // Calculate the angle, given x and y components:
   float pos = atan2(servoY, servoX) * 180.0 / PI; // Convert to degrees
   // atan2 will give us an angle +/-180
-  if (pos < 0) // Convert it to 0-360:
+  if (pos < 0) {
     pos = 360.0 + pos;
-
+  }
   int servoPos = map(pos, 0, 360, 5, servoMax);
-
-  // Constrain the angle between min/max:
-  myServo.write(servoPos); // And set the servo position
-
+  myServo.write(servoPos);
   Blynk.virtualWrite(V17, servoPos);//SERVO_ANGLE_VIRUTAL
 }
 
@@ -337,7 +332,7 @@ BLYNK_WRITE(V14) {
 BLYNK_WRITE(V16) {
   int sMax = param.asInt();
   servoMax = constrain(sMax, SERVO_MINIMUM + 1, 360);
-  Serial.println("ServoMax: " + String(servoMax));
+  Serial.println(F("ServoMax: ") + String(servoMax));
 }
 
 BLYNK_READ(V18) {
@@ -502,7 +497,7 @@ void checkTwitter() {
   msg += "[" + String(millis()) + "]";
   Blynk.tweet(msg);
   Serial.println(F("tweet"));
-  
+
   if (!emailEnableIn) {
     return;
   }

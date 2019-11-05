@@ -333,14 +333,6 @@ BLYNK_WRITE(V16) {
   Serial.println("ServoMax: " + String(servoMax));
 }
 
-BLYNK_READ(V20) {
-  int rawADC = analogRead(A0);
-  float voltage = ((float) rawADC / 1024.0) * 3.2;
-  voltage *= 2.0; // Assume dividing VIN by two with another divider
-
-  Blynk.virtualWrite(V20, voltage);
-}
-
 BLYNK_READ(V18) {
   int lightADC = analogRead(A0);
   Blynk.virtualWrite(V18, lightADC);

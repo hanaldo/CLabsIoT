@@ -27,6 +27,7 @@ int buttonPinValue = 0;
 int buttonPinValueOld = 0;
 long ramTimer = 0;
 int rainbowCounter = 0;
+int emailEnableIn = 0;
 
 WidgetLED ledV1(V1);
 WidgetLCD thLCD(V10);
@@ -96,27 +97,6 @@ void loop() {
   } else {
     Serial.println(F("Blynk Disconnected"));
   }
-  //  Serial.println("Loop");
-  //  rgb.setPixelColor(0, 0x00FF00);
-  //  rgb.show();
-  //  delay(1000);
-  //  rgb.setPixelColor(0, 0x0000FF);
-  //  rgb.show();
-  //  delay(1000);
-  //  rgb.setPixelColor(0, 0xFF0000);
-  //  rgb.show();
-  //  delay(1000);
-  //  rgb.setPixelColor(0, 0xFFFF00);
-  //  rgb.show();
-  //  delay(1000);
-  //  if (ramTimer == 0) {
-  //    ramTimer = millis();
-  //  } else {
-  //    if (millis() - ramTimer > 10000) {
-  //      ramTimer = 0;
-  //      Serial.println(ESP.getFreeHeap());
-  //    }
-  //  }
 }
 
 void checkButton() {
@@ -194,7 +174,7 @@ BLYNK_READ(V7) {
 
 //ADC_VOLTAGE_VIRTUAL
 BLYNK_READ(V8) {
-  float adcRaw = analogRead(A0);
+  float adcRaw = analogRead(A0);//A0 - ADC
   float voltage = ((float)adcRaw / 1024.0) * 3.2;
   Blynk.virtualWrite(V8, voltage);
 }
@@ -371,13 +351,12 @@ unsigned long lastEmailUpdate = 0;
 
 //EMAIL_ENABLED_VIRTUAL
 BLYNK_WRITE(V27) {
-  int emailEnableIn = param.asInt();
+  emailEnableIn = param.asInt();
   if (emailEnableIn) {
     if ((lastEmailUpdate == 0) || (lastEmailUpdate + EMAIL_UPDATE_RATE < millis())) {
-      sendEmail(); // Send an email
-      lastEmailUpdate = millis(); // Update the email time
+      sendEmail();
+      lastEmailUpdate = millis();
     } else {
-      // Print how many seconds before the next print
       int waitTime = (lastEmailUpdate + EMAIL_UPDATE_RATE) - millis();
       waitTime /= 1000;
       terminal.println("Please wait " + String(waitTime) + " seconds");
@@ -398,12 +377,10 @@ void sendEmail() {
   emailMessage += "Humidity: " + String(therSense.readHumidity()) + "%<br/>"; // Add humidity sensor
   emailMessage += "<br/>";
   emailMessage += "Runtime: " + String(millis() / 1000) + "s";
-  // Send the email:
   Blynk.email(emailSubject.c_str(), emailMessage.c_str());
-  // Print a help message
-  terminal.println("Email sent " + String(millis() / 1000) + "s");
+  terminal.println("Email sent at " + String(millis() / 1000) + "s");
   terminal.flush();
-  Serial.println(F("sent"));
+  Serial.println(F("Emailed"));
 }
 
 BLYNK_WRITE(V30) {
@@ -475,6 +452,10 @@ void checkTwitter() {
         msg += "[" + String(millis()) + "]";
         Blynk.tweet(msg);
         Serial.println(F("tweet"));
+        if (emailEnableIn) {
+          sendEmail();
+          lastEmailUpdate = millis();
+        }
       }
     }
   }

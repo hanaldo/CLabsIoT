@@ -486,23 +486,28 @@ BLYNK_WRITE(V24) {
 }
 
 void checkTwitter() {
-  if (tweetRate > 0) {
-    unsigned long now = millis();
-    if (now - lastTweet > tweetRate) {
-      lastTweet = now;
-      unsigned int moisture = analogRead(A0);
-      if (moisture < moistureThreshold) {
-        String msg = boardName + " thirsty!\r\nSoil reading: " + String(moisture) + ".\r\n";
-        msg += "[" + String(millis()) + "]";
-        Blynk.tweet(msg);
-        Serial.println(F("tweet"));
-        if (emailEnableIn) {
-          sendEmail();
-          lastEmailUpdate = millis();
-        }
-      }
-    }
+  if (tweetRate <= 0) {
+    return;
   }
+  unsigned long now = millis();
+  if (now - lastTweet < tweetRate) {
+    return;
+  }
+  lastTweet = now;
+  unsigned int moisture = analogRead(A0);
+  if (moisture >= moistureThreshold) {
+    return;
+  }
+  String msg = boardName + " thirsty!\r\nSoil reading: " + String(moisture) + ".\r\n";
+  msg += "[" + String(millis()) + "]";
+  Blynk.tweet(msg);
+  Serial.println(F("tweet"));
+  
+  if (!emailEnableIn) {
+    return;
+  }
+  sendEmail();
+  lastEmailUpdate = millis();
 }
 
 //========================================================================================================================================

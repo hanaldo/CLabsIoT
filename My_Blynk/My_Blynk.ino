@@ -58,7 +58,7 @@ void setup() {
   if (digitalRead(BUTTON_PIN) == 0) {
     Serial.println(F("Reset"));
     configured = false;
-    resetEEPROM();
+    resetConfig();
     authToken = "";
   }
   if (!configured) {
@@ -94,8 +94,7 @@ void loop() {
     checkButton();
     checkTwitter();
     checkSerialInput();
-  }
-  else {
+  } else {
     Serial.println(F("Blynk Disconnected"));
   }
   //  Serial.println("Loop");
@@ -503,7 +502,7 @@ String getBlynkAuth() {
   return retAuth;
 }
 
-void resetEEPROM() {
+void resetConfig() {
   EEPROM.write(EEPROM_CONFIG_FLAG_ADDRESS, 0);
   EEPROM.commit();
   SPIFFS.remove(BLYNK_AUTH_SPIFF_FILE);

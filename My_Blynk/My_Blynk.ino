@@ -29,6 +29,7 @@ int rainbowCounter = 0;
 
 WidgetLED ledV1(V1);
 WidgetLCD thLCD(V10);
+WidgetTerminal terminal(V21);//SERIAL_VIRTUAL
 
 void setup() {
   Serial.begin(9600);
@@ -88,6 +89,7 @@ void loop() {
   Blynk.run();
   if (Blynk.connected()) {
     checkButton();
+    checkTwitter();
   }
   else {
     Serial.println(F("Blynk Disconnected"));
@@ -164,24 +166,31 @@ BLYNK_WRITE(V15) {
   updateRGB();
 }
 
-float tempCOffset = -7.33; //-8.33;
+float tempCOffset = -8.33; //-8.33;
 float tempCUpperLimit = 27;
+
+//TEMPERATURE_C_VIRTUAL
 BLYNK_READ(V6) {
   float tempC = therSense.readTemperature();
   tempC += tempCOffset; // Add any offset
   Blynk.virtualWrite(V6, tempC);
 }
+
+//TEMPERATURE_F_VIRTUAL
 BLYNK_READ(V5) {
   float tempC = therSense.readTemperature();
   tempC += tempCOffset;
   float tempF = tempC * 9.0 / 5.0 + 32.0;
   Blynk.virtualWrite(V5, tempF);
 }
+
+//HUMIDITY_VIRTUAL
 BLYNK_READ(V7) {
   float humidity = therSense.readHumidity();
   Blynk.virtualWrite(V7, humidity);
 }
 
+//ADC_VOLTAGE_VIRTUAL
 BLYNK_READ(V8) {
   float adcRaw = analogRead(A0);
   float voltage = ((float)adcRaw / 1024.0) * 3.2;
@@ -318,6 +327,69 @@ BLYNK_READ(V25) {
   if (lastSwitchState != switchState) {
   }
 }
+
+String boardName = "BlynkUCI";
+
+BLYNK_WRITE(V21) {
+  String incoming = param.asStr();
+  Serial.println(incoming);
+
+  if (incoming.charAt(0) == '$') {
+    String newName = incoming.substring(1, incoming.length());
+    boardName = newName;
+    terminal.println("Board name set to: " + boardName + ".");
+    terminal.flush();
+  } else {
+    terminal.println(F("Unrecognized command!"));
+    terminal.flush();
+  }
+}
+
+unsigned long tweetRate = 0;
+unsigned long lastTweet = 0;
+unsigned int moistureThreshold = 900;
+
+//TWITTER_THRESHOLD_VIRTUAL
+BLYNK_WRITE(V23) {
+  moistureThreshold = param.asInt();
+  String msg = "Moisture Threshold is set to: " + String(moistureThreshold) + ".\r\n";
+  terminal.println(msg);
+  terminal.flush();
+  Serial.println(moistureThreshold);
+  lastTweet = millis();
+}
+
+//TWITTER_RATE_VIRTUAL
+BLYNK_WRITE(V24) {
+  int r = param.asInt();
+  if (r < 10) {
+    r = 0;
+  }
+  tweetRate = r * 1000;
+  String msg = "Tweet Rate is set to: " + String(r) + " seconds.\r\n";
+  terminal.println(msg);
+  terminal.flush();
+  Serial.println(tweetRate);
+  lastTweet = millis();
+}
+
+void checkTwitter() {
+  if (tweetRate > 0) {
+    unsigned long now = millis();
+    if (now - lastTweet > tweetRate) {
+      lastTweet = now;
+      unsigned int moisture = analogRead(A0);
+      if (moisture < moistureThreshold) {
+        String msg = boardName + " thirsty!\r\nSoil reading: " + String(moisture) + ".\r\n";
+        msg += "[" + String(millis()) + "]";
+        Blynk.tweet(msg);
+        Serial.println(F("tweet"));
+      }
+    }
+  }
+}
+
+//========================================================================================================================================
 
 void writeBlynkConfig(String authToken) {
   File authFile = SPIFFS.open(BLYNK_AUTH_SPIFF_FILE, "w");

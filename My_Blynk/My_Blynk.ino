@@ -15,6 +15,8 @@ char ssid[] = "UCInet Mobile Access";
 char pass[] = "";
 bool configured = false;
 String authToken = "";
+String boardName = "BlynkUCI";
+String emailAddress = "";
 
 const int EEPROM_CONFIG_FLAG_ADDRESS = 0;
 const String BLYNK_AUTH_SPIFF_FILE = "/blynk.txt";
@@ -30,6 +32,7 @@ int rainbowCounter = 0;
 WidgetLED ledV1(V1);
 WidgetLCD thLCD(V10);
 WidgetTerminal terminal(V21);//SERIAL_VIRTUAL
+WidgetTerminal chat(V30);//SERIAL_VIRTUAL
 
 void setup() {
   Serial.begin(9600);
@@ -90,6 +93,7 @@ void loop() {
   if (Blynk.connected()) {
     checkButton();
     checkTwitter();
+    checkSerialInput();
   }
   else {
     Serial.println(F("Blynk Disconnected"));
@@ -269,11 +273,13 @@ BLYNK_WRITE(V11) {
 }
 
 unsigned int servoMax = 180; // Default maximum servo angle
+const int SERVO_MINIMUM = 5;
 int servoX = 0; // Servo angle x component
 int servoY = 0; // Servo angle y component
 Servo myServo; // Servo object
 bool firstServoRun = true;
 
+//SERVO_XY_VIRTUAL
 BLYNK_WRITE(V14) {
   if (firstServoRun) {
     myServo.attach(15);
@@ -297,7 +303,14 @@ BLYNK_WRITE(V14) {
   // Constrain the angle between min/max:
   myServo.write(servoPos); // And set the servo position
 
-  Blynk.virtualWrite(V17, servoPos);
+  Blynk.virtualWrite(V17, servoPos);//SERVO_ANGLE_VIRUTAL
+}
+
+//SERVO_MAX_VIRTUAL
+BLYNK_WRITE(V16) {
+  int sMax = param.asInt();
+  servoMax = constrain(sMax, SERVO_MINIMUM + 1, 360);
+  Serial.println("ServoMax: " + String(servoMax));
 }
 
 BLYNK_READ(V20) {
@@ -313,22 +326,86 @@ BLYNK_READ(V18) {
   Blynk.virtualWrite(V18, lightADC);
 }
 
-#define NOTIFICATION_LIMIT 60000
+#define NOTIFICATION_LIMIT 5000
 unsigned long lastDoorSwitchNotification = 0;
 uint8_t lastSwitchState = 255;
 
+//DOOR_STATE_VIRTUAL
 BLYNK_READ(V25) {
-  uint8_t switchState = digitalRead(16);
+  uint8_t switchState = digitalRead(16);//DOOR_SWITCH_PIN
   if (switchState) {
     Blynk.virtualWrite(V25, "Close");
   } else {
     Blynk.virtualWrite(V25, "Open");
   }
   if (lastSwitchState != switchState) {
+    if (switchState) {
+      Serial.println(F("Door closed"));
+      if (lastDoorSwitchNotification && (lastDoorSwitchNotification + NOTIFICATION_LIMIT > millis())) {
+        int timeLeft = (lastDoorSwitchNotification + NOTIFICATION_LIMIT - millis()) / 1000;
+        terminal.println("Door closed. Can't notify for " + String(timeLeft) + "s.");
+        terminal.flush();
+      } else {
+        Blynk.notify("Door closed\r\nFrom: " + boardName + "\r\n[" + String(millis()) + "]");
+        terminal.println("Door closed!");
+        terminal.flush();
+        lastDoorSwitchNotification = millis();
+      }
+    } else {
+      Serial.println(F("Door opened"));
+      if (lastDoorSwitchNotification && (lastDoorSwitchNotification + NOTIFICATION_LIMIT > millis())) {
+        int timeLeft = (lastDoorSwitchNotification + NOTIFICATION_LIMIT - millis()) / 1000;
+        terminal.println("Door open. Can't notify for " + String(timeLeft) + "s");
+        terminal.flush();
+      } else {
+        Blynk.notify("Door open\r\nFrom: " + boardName + "\r\n[" + String(millis()) + "]");
+        terminal.println("Door opened!");
+        terminal.flush();
+        lastDoorSwitchNotification = millis();
+      }
+    }
+    lastSwitchState = switchState;
   }
 }
 
-String boardName = "BlynkUCI";
+#define EMAIL_UPDATE_RATE 5000
+unsigned long lastEmailUpdate = 0;
+
+//EMAIL_ENABLED_VIRTUAL
+//BLYNK_WRITE(V27) {
+//  int emailEnableIn = param.asInt();
+//  if (emailEnableIn) {
+//    if (emailAddress != "") {
+//      if ((lastEmailUpdate == 0) || (lastEmailUpdate + EMAIL_UPDATE_RATE < millis())) {
+//        emailUpdate(); // Send an email
+//        lastEmailUpdate = millis(); // Update the email time
+//      } else {
+//        // Print how many seconds before the next print
+//        int waitTime = (lastEmailUpdate + EMAIL_UPDATE_RATE) - millis();
+//        waitTime /= 1000;
+//        terminal.println("Please wait " + String(waitTime) + " seconds");
+//        terminal.flush();
+//      }
+//    } else {
+//      terminal.println("Type !email@address.com to set the email address");
+//      terminal.flush();
+//    }
+//  }
+//}
+
+BLYNK_WRITE(V30) {
+  String incoming = param.asStr();
+  Serial.println(incoming);
+}
+
+void checkSerialInput() {
+  if (Serial.available()) {
+    String input = Serial.readString();
+    Serial.println(input);
+    chat.print(input);
+    chat.flush();
+  }
+}
 
 BLYNK_WRITE(V21) {
   String incoming = param.asStr();

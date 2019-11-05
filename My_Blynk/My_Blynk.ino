@@ -16,7 +16,6 @@ char pass[] = "";
 bool configured = false;
 String authToken = "";
 String boardName = "BlynkUCI";
-String emailAddress = "";
 
 const int EEPROM_CONFIG_FLAG_ADDRESS = 0;
 const String BLYNK_AUTH_SPIFF_FILE = "/blynk.txt";
@@ -371,26 +370,41 @@ BLYNK_READ(V25) {
 unsigned long lastEmailUpdate = 0;
 
 //EMAIL_ENABLED_VIRTUAL
-//BLYNK_WRITE(V27) {
-//  int emailEnableIn = param.asInt();
-//  if (emailEnableIn) {
-//    if (emailAddress != "") {
-//      if ((lastEmailUpdate == 0) || (lastEmailUpdate + EMAIL_UPDATE_RATE < millis())) {
-//        emailUpdate(); // Send an email
-//        lastEmailUpdate = millis(); // Update the email time
-//      } else {
-//        // Print how many seconds before the next print
-//        int waitTime = (lastEmailUpdate + EMAIL_UPDATE_RATE) - millis();
-//        waitTime /= 1000;
-//        terminal.println("Please wait " + String(waitTime) + " seconds");
-//        terminal.flush();
-//      }
-//    } else {
-//      terminal.println("Type !email@address.com to set the email address");
-//      terminal.flush();
-//    }
-//  }
-//}
+BLYNK_WRITE(V27) {
+  int emailEnableIn = param.asInt();
+  if (emailEnableIn) {
+    if ((lastEmailUpdate == 0) || (lastEmailUpdate + EMAIL_UPDATE_RATE < millis())) {
+      sendEmail(); // Send an email
+      lastEmailUpdate = millis(); // Update the email time
+    } else {
+      // Print how many seconds before the next print
+      int waitTime = (lastEmailUpdate + EMAIL_UPDATE_RATE) - millis();
+      waitTime /= 1000;
+      terminal.println("Please wait " + String(waitTime) + " seconds");
+      terminal.flush();
+    }
+  }
+}
+
+void sendEmail() {
+  String emailSubject = "My BlynkBoard Statistics"; // Set the subject
+  String emailMessage = ""; // Create a message string
+  emailMessage += "D0: " + String(digitalRead(0)) + "<br/>"; // Add D0 status
+  emailMessage += "D16: " + String(digitalRead(16)) + "<br/>"; // Add D16 status
+  emailMessage += "<br/>";
+  emailMessage += "A0: " + String(analogRead(A0)) + "<br/>"; // Add A0 reading
+  emailMessage += "<br/>";
+  emailMessage += "Temp: " + String(therSense.readTemperature()) + "C<br/>"; // Add temp sensor
+  emailMessage += "Humidity: " + String(therSense.readHumidity()) + "%<br/>"; // Add humidity sensor
+  emailMessage += "<br/>";
+  emailMessage += "Runtime: " + String(millis() / 1000) + "s";
+  // Send the email:
+  Blynk.email(emailSubject.c_str(), emailMessage.c_str());
+  // Print a help message
+  terminal.println("Email sent " + String(millis() / 1000) + "s");
+  terminal.flush();
+  Serial.println(F("sent"));
+}
 
 BLYNK_WRITE(V30) {
   String incoming = param.asStr();
@@ -412,6 +426,7 @@ BLYNK_WRITE(V21) {
 
   if (incoming.charAt(0) == '$') {
     String newName = incoming.substring(1, incoming.length());
+    newName.trim();
     boardName = newName;
     terminal.println("Board name set to: " + boardName + ".");
     terminal.flush();

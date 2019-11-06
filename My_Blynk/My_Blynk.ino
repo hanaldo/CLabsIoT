@@ -118,6 +118,8 @@ void loop() {
     checkSerialInput();
   } else {
     Serial.println(F("Blynk Disconnected"));
+    rgb.setPixelColor(0, 0xFF0000);
+    rgb.show();
   }
 }
 
@@ -449,15 +451,6 @@ BLYNK_WRITE(V30) {
   Serial.println(incoming);
 }
 
-void checkSerialInput() {
-  if (Serial.available()) {
-    String input = Serial.readString();
-    Serial.println(input);
-    chat.print(input);
-    chat.flush();
-  }
-}
-
 BLYNK_WRITE(V21) {
   String incoming = param.asStr();
   Serial.print(F("V21: "));
@@ -528,7 +521,18 @@ void checkTwitter() {
   lastEmailUpdate = millis();
 }
 
-//========================================================================================================================================
+//=================================================================================================================================
+
+void checkSerialInput() {
+  if (Serial.available()) {
+    String input = Serial.readString();
+    Serial.println(input);
+    chat.print(input);
+    chat.flush();
+    //Serial.print(F("FreeHeap:"));
+    //Serial.println(ESP.getFreeHeap());
+  }
+}
 
 void writeBlynkSettings(String setting, String fileName) {
   File file = SPIFFS.open(fileName, "w");

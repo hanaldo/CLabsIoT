@@ -16,6 +16,7 @@
 
 
 6. You should see...
+<img width="400" src="https://user-images.githubusercontent.com/4184020/68334121-ccd3a580-008e-11ea-8958-b5b5842959bd.png"/>
 
 7. Unplug your board
 

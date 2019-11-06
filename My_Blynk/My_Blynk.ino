@@ -22,14 +22,14 @@
 HTU21D therSense;
 Adafruit_NeoPixel rgb = Adafruit_NeoPixel(1, 4, NEO_GRB + NEO_KHZ800);
 
-char ssid[] = "UCInet Mobile Access";
-char pass[] = "";
 bool configured = false;
-String authToken = "";
 String boardName = "BlynkUCI";
+String settings[] = {"", "", ""};//token, ssid, pass
 
 const int EEPROM_CONFIG_FLAG_ADDRESS = 0;
 const String BLYNK_AUTH_SPIFF_FILE = "/blynk.txt";
+const String SSID_SPIFF_FILE = "/ssid.txt";
+const String PASS_SPIFF_FILE = "/pass.txt";
 const int BLYNK_AUTH_TOKEN_SIZE = 32;
 
 Ticker v9Ticker;
@@ -60,25 +60,31 @@ void setup() {
   rgb.show();
   delay(5000);
 
-  authToken = getBlynkAuth();
-  if (authToken != "") {
+  settings[0] = getFile(BLYNK_AUTH_SPIFF_FILE);
+  settings[1] = getFile(SSID_SPIFF_FILE);
+  settings[2] = getFile(PASS_SPIFF_FILE);
+  if (settings[0] != "") {
     Serial.print(F("Your current auth token is: "));
-    Serial.println(authToken);
+    Serial.println(settings[0]);
+    Serial.print(F("Your are connecting: "));
+    Serial.println(settings[1]);
     configured = true;
   }
   if (digitalRead(BUTTON_PIN) == 0) {
     Serial.println(F("Reset"));
     configured = false;
     resetConfig();
-    authToken = "";
+    settings[0] = "";
   }
   if (!configured) {
     rgb.setPixelColor(0, 0x0000FF);
     rgb.show();
     delay(3000);
-    Serial.println(F("Please enter your auth token"));
+    Serial.println(F("Please enter your auth token and wifi info:"));
   } else {
-    Blynk.begin(authToken.c_str(), ssid, pass);
+    rgb.setPixelColor(0, 0x00FF00);
+    rgb.show();
+    Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str());
   }
 }
 
@@ -90,12 +96,17 @@ BLYNK_CONNECTED() {
 void loop() {
   if (!configured) {
     if (Serial.available()) {
-      authToken = Serial.readString();
-      authToken.trim();
-      Serial.println(authToken);
-      writeBlynkConfig(authToken);
+      String input = Serial.readString();
+      input = input + ",";
+      Serial.println(input);
+      parseString(input);
+      writeBlynkSettings(settings[0], BLYNK_AUTH_SPIFF_FILE);
+      writeBlynkSettings(settings[1], SSID_SPIFF_FILE);
+      writeBlynkSettings(settings[2], PASS_SPIFF_FILE);
       configured = true;
-      Blynk.begin(authToken.c_str(), ssid, pass);
+      rgb.setPixelColor(0, 0x00FF00);
+      rgb.show();
+      Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str());
     }
     return;
   }
@@ -343,7 +354,8 @@ BLYNK_WRITE(V14) {
 BLYNK_WRITE(V16) {
   int sMax = param.asInt();
   servoMax = constrain(sMax, SERVO_MINIMUM + 1, 360);
-  Serial.println(F("ServoMax: ") + String(servoMax));
+  Serial.print(F("ServoMax: "));
+  Serial.println(String(servoMax));
 }
 
 BLYNK_READ(V18) {
@@ -518,43 +530,54 @@ void checkTwitter() {
 
 //========================================================================================================================================
 
-void writeBlynkConfig(String authToken) {
-  File authFile = SPIFFS.open(BLYNK_AUTH_SPIFF_FILE, "w");
-  if (authFile) {
-    authFile.print(authToken);
-    authFile.close();
+void writeBlynkSettings(String setting, String fileName) {
+  File file = SPIFFS.open(fileName, "w");
+  if (file) {
+    file.print(setting);
+    file.close();
   } else {
-    Serial.println("Cannot write file.");
+    Serial.println(F("Cannot write file."));
     return;
   }
-  Serial.println("Auth saved.");
+  Serial.println(F("Settings saved."));
 }
 
-String getBlynkAuth() {
-  String retAuth = "";
-  if (SPIFFS.exists(BLYNK_AUTH_SPIFF_FILE)) {
-    File authFile = SPIFFS.open(BLYNK_AUTH_SPIFF_FILE, "r");
-    if (authFile) {
-      size_t authFileSize = authFile.size();
-      // Only return auth token if it's the right size (32 bytes)
-      if (authFileSize == BLYNK_AUTH_TOKEN_SIZE) {
-        while (authFile.available()) {
-          retAuth += (char)authFile.read();
-        }
-      } else {
-        Serial.println(F("Wrong size."));
+String getFile(String fileName) {
+  String content = "";
+  if (SPIFFS.exists(fileName)) {
+    File file = SPIFFS.open(fileName, "r");
+    if (file) {
+      while (file.available()) {
+        content += (char)file.read();
       }
-      authFile.close();
+      file.close();
     }
   }
   else {
-    Serial.println(F("File does not exist."));
+    Serial.println(F("No setting file."));
   }
-  return retAuth;
+  return content;
+}
+
+void parseString(String message) {
+  int index = 0;
+  int commaPosition = 0;
+  do {
+    commaPosition = message.indexOf(",");
+    if (commaPosition != -1) {
+      String item = message.substring(0, commaPosition);
+      item.trim();
+      settings[index] = item;
+      message = message.substring(commaPosition + 1, message.length());
+      index += 1;
+    }
+  } while (commaPosition >= 0 && index < 3);
 }
 
 void resetConfig() {
   EEPROM.write(EEPROM_CONFIG_FLAG_ADDRESS, 0);
   EEPROM.commit();
   SPIFFS.remove(BLYNK_AUTH_SPIFF_FILE);
+  SPIFFS.remove(SSID_SPIFF_FILE);
+  SPIFFS.remove(PASS_SPIFF_FILE);
 }

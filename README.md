@@ -1,11 +1,11 @@
 # CLabs Sparkfun Blynk Board
 
 ## Initial Setup
-1. Install Arduino IDE on your computer
+1. Install [Arduino IDE](https://www.arduino.cc/en/Main/Software) on your computer
 2. Power on the board by your computer through USB cable, the on-board RGB LED should shine a white color, that means it is booting up
 3. Wait until the white color changes to blue, or skip the waiting and continue step 4
 4. Open the Serial Monitor from Arduino IDE (make sure you are using the right port name and baud 9600)
-5. Make sure the RGB LED is blue, then enter your Blynk token at the top input field of the monitor, then click "Send"
+5. Make sure the RGB LED is blue, then enter your Blynk Token, WiFi SSID Name, and Password for the WiFi (separated by comma) at the top input field of the monitor, then click "Send"
 6. You should see...
 7. Unplug your board
 

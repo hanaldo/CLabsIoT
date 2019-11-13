@@ -56,8 +56,7 @@ void setup() {
     rgb.show();
     return;
   }
-  rgb.setPixelColor(0, 0xFFFFFF);
-  rgb.show();
+  showRGB(255, 255, 255, 30);
   delay(5000);
 
   Serial.println(WiFi.macAddress());
@@ -78,14 +77,12 @@ void setup() {
     settings[0] = "";
   }
   if (!configured) {
-    rgb.setPixelColor(0, 0x0000FF);
-    rgb.show();
+    showRGB(0, 0, 255, 30);
     delay(3000);
     Serial.println(F("Please enter your auth token and wifi info:"));
   } else {
-    rgb.setPixelColor(0, 0x00FF00);
-    rgb.show();
     Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str());
+    showRGB(0, 255, 0, 30);
   }
 }
 
@@ -105,9 +102,8 @@ void loop() {
       writeBlynkSettings(settings[1], SSID_SPIFF_FILE);
       writeBlynkSettings(settings[2], PASS_SPIFF_FILE);
       configured = true;
-      rgb.setPixelColor(0, 0x00FF00);
-      rgb.show();
       Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str());
+      showRGB(0, 255, 0, 30);
     }
     return;
   }
@@ -119,8 +115,7 @@ void loop() {
     checkSerialInput();
   } else {
     Serial.println(F("Blynk Disconnected"));
-    rgb.setPixelColor(0, 0xFF0000);
-    rgb.show();
+    showRGB(255, 0, 0, 255);
   }
 }
 
@@ -147,6 +142,13 @@ void updateRGB() {
   rgb.setPixelColor(0, rgb.Color(map(red, 0, 255, 0, rgbMaxBrightness),
                                  map(green, 0, 255, 0, rgbMaxBrightness),
                                  map(blue, 0, 255, 0, rgbMaxBrightness)));
+  rgb.show();
+}
+
+void showRGB(int r, int g, int b, int br) {
+  rgb.setPixelColor(0, rgb.Color(map(r, 0, 255, 0, br),
+                                 map(g, 0, 255, 0, br),
+                                 map(b, 0, 255, 0, br)));
   rgb.show();
 }
 

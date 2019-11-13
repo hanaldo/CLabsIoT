@@ -89,6 +89,7 @@ void setup() {
 BLYNK_CONNECTED() {
   Serial.println(F("Blynk Connected"));
   Blynk.syncAll();
+  SPIFFS.end();
 }
 
 void loop() {
@@ -96,14 +97,16 @@ void loop() {
     if (Serial.available()) {
       String input = Serial.readString();
       input = input + ",";
-      Serial.println(input);
       parseString(input);
       writeBlynkSettings(settings[0], BLYNK_AUTH_SPIFF_FILE);
       writeBlynkSettings(settings[1], SSID_SPIFF_FILE);
       writeBlynkSettings(settings[2], PASS_SPIFF_FILE);
-      configured = true;
+      Serial.println(settings[0]);
+      Serial.println(settings[1]);
+      Serial.println(settings[2]);
       Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str());
       showRGB(0, 255, 0, 30);
+      configured = true;
     }
     return;
   }

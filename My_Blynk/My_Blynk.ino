@@ -10,6 +10,7 @@
   Please see the included LICENSE.txt for more information.
 */
 #define BLYNK_PRINT Serial
+//#define DEBUG
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
 #include <Adafruit_NeoPixel.h>
@@ -187,7 +188,9 @@ BLYNK_READ(V6) {
   float tempC = therSense.readTemperature();
   tempC += tempCOffset; // Add any offset
   Blynk.virtualWrite(V6, tempC);
+#ifdef DEBUG
   Serial.println(F("TempC:V6"));
+#endif
 }
 
 //TEMPERATURE_F_VIRTUAL
@@ -196,14 +199,18 @@ BLYNK_READ(V5) {
   tempC += tempCOffset;
   float tempF = tempC * 9.0 / 5.0 + 32.0;
   Blynk.virtualWrite(V5, tempF);
+#ifdef DEBUG
   Serial.println(F("TempF:V5"));
+#endif
 }
 
 //HUMIDITY_VIRTUAL
 BLYNK_READ(V7) {
   float humidity = therSense.readHumidity();
   Blynk.virtualWrite(V7, humidity);
+#ifdef DEBUG
   Serial.println(F("Humi:V7"));
+#endif
 }
 
 //ADC_VOLTAGE_VIRTUAL
@@ -211,7 +218,9 @@ BLYNK_READ(V8) {
   float adcRaw = analogRead(A0);//A0 - ADC
   float voltage = ((float)adcRaw / 1024.0) * 3.2;
   Blynk.virtualWrite(V8, voltage);
+#ifdef DEBUG
   Serial.println(F("Vol:V8"));
+#endif
 }
 
 BLYNK_WRITE(V9) {
@@ -356,6 +365,8 @@ BLYNK_WRITE(V14) {
   int servoPos = map(pos, 0, 360, 5, servoMax);
   myServo.write(servoPos);
   Blynk.virtualWrite(V17, servoPos);//SERVO_ANGLE_VIRUTAL
+  Serial.print(F("ServoPosition: "));
+  Serial.println(String(servoPos));
 }
 
 //SERVO_MAX_VIRTUAL
@@ -369,7 +380,9 @@ BLYNK_WRITE(V16) {
 BLYNK_READ(V18) {
   int lightADC = analogRead(A0);
   Blynk.virtualWrite(V18, lightADC);
+#ifdef DEBUG
   Serial.println(F("Light:V18"));
+#endif
 }
 
 #define NOTIFICATION_LIMIT 5000

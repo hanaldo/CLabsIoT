@@ -449,15 +449,13 @@ BLYNK_WRITE(V27) {
 void sendEmail() {
   String emailSubject = "My BlynkBoard Statistics"; // Set the subject
   String emailMessage = ""; // Create a message string
-  emailMessage += "D0: " + String(digitalRead(0)) + "<br/>"; // Add D0 status
-  emailMessage += "D16: " + String(digitalRead(16)) + "<br/>"; // Add D16 status
-  emailMessage += "<br/>";
   emailMessage += "A0: " + String(analogRead(A0)) + "<br/>"; // Add A0 reading
   emailMessage += "<br/>";
   emailMessage += "Temp: " + String(therSense.readTemperature()) + "C<br/>"; // Add temp sensor
   emailMessage += "Humidity: " + String(therSense.readHumidity()) + "%<br/>"; // Add humidity sensor
   emailMessage += "<br/>";
   emailMessage += "Runtime: " + String(millis() / 1000) + "s";
+  emailMessage += "<br/><hr/><div style='display:none;'>ubicom2020</div>";
   Blynk.email(emailSubject.c_str(), emailMessage.c_str());
   terminal.println("Email sent at " + String(millis() / 1000) + "s");
   terminal.flush();

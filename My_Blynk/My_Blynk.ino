@@ -49,7 +49,7 @@ WidgetTerminal chat(V30);//SERIAL_VIRTUAL
 void setup() {
   Serial.begin(9600);
   rgb.begin();
-  pinMode(2, INPUT_PULLUP);
+  pinMode(16, INPUT_PULLDOWN_16);
   therSense.begin();
   if (!SPIFFS.begin()) {
     Serial.println(F("Failed to initialize SPIFFS"));

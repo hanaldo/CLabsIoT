@@ -223,6 +223,15 @@ BLYNK_READ(V8) {
 #endif
 }
 
+//ADC_BATT_VIRTUAL
+BLYNK_READ(V20) {
+  int rawADC = analogRead(A0);
+  float voltage = ((float) rawADC / 1024.0) * 3.2;
+  voltage *= 2.0; // Assume dividing VIN by two with another divider
+
+  Blynk.virtualWrite(V20, voltage);
+}
+
 BLYNK_WRITE(V9) {
   int pinValue = param.asInt();
   if (pinValue == 0) {

@@ -40,6 +40,10 @@ int buttonPinValueOld = 0;
 long ramTimer = 0;
 int rainbowCounter = 0;
 int emailEnableIn = 0;
+int adcLower = 0;
+int adcHigher = 0;
+bool pushADC = false;
+BlynkTimer timerV50;
 
 WidgetLED ledV1(V1);
 WidgetLCD thLCD(V10);
@@ -84,6 +88,7 @@ void setup() {
   } else {
     Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str());
     showRGB(0, 255, 0, 30);
+    timerV50.setInterval(500L, tryPushV50);
   }
 }
 
@@ -117,6 +122,7 @@ void loop() {
     checkButton();
     checkTwitter();
     checkSerialInput();
+    timerV50.run();
   } else {
     Serial.println(F("Blynk Disconnected"));
     showRGB(255, 0, 0, 255);
@@ -228,7 +234,6 @@ BLYNK_READ(V20) {
   int rawADC = analogRead(A0);
   float voltage = ((float) rawADC / 1024.0) * 3.2;
   voltage *= 2.0; // Assume dividing VIN by two with another divider
-
   Blynk.virtualWrite(V20, voltage);
 }
 
@@ -545,6 +550,53 @@ void checkTwitter() {
   }
   sendEmail();
   lastEmailUpdate = millis();
+}
+
+unsigned long lashPushV50 = 0;
+bool sentV50Once = false;
+
+//Push ADC to a virtual pin
+void tryPushV50() {
+  if (!pushADC) {
+    return;
+  }
+  unsigned long now = millis();
+  if (now - lashPushV50 < 5000) {//5s protection
+    return;
+  }
+  int adcRaw = analogRead(A0);//A0 - ADC
+  if (adcRaw > adcLower && adcRaw < adcHigher) {
+    if (!sentV50Once) {
+      Blynk.virtualWrite(V50, adcRaw);
+      sentV50Once = true;
+      lashPushV50 = now;
+      Serial.println(F("V50 pushed!"));
+    }
+  } else {
+    sentV50Once = false;
+  }
+}
+
+BLYNK_WRITE(V51) {
+  adcLower = param.asInt();
+  if (adcLower < adcHigher) {
+    pushADC = true;
+    Serial.println(F("Push V50 On"));
+  } else {
+    pushADC = false;
+    Serial.println(F("Push V50 Off"));
+  }
+}
+
+BLYNK_WRITE(V52) {
+  adcHigher = param.asInt();
+  if (adcLower < adcHigher) {
+    pushADC = true;
+    Serial.println(F("Push V50 On"));
+  } else {
+    pushADC = false;
+    Serial.println(F("Push V50 Off"));
+  }
 }
 
 //=================================================================================================================================

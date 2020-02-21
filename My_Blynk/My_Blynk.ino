@@ -43,7 +43,7 @@ int emailEnableIn = 0;
 int adcLower = 0;
 int adcHigher = 0;
 bool pushADC = false;
-BlynkTimer timerV50;
+BlynkTimer timerPushVirtual;
 
 WidgetLED ledV1(V1);
 WidgetLCD thLCD(V10);
@@ -88,7 +88,8 @@ void setup() {
   } else {
     Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str());
     showRGB(0, 255, 0, 30);
-    timerV50.setInterval(500L, tryPushV50);
+    timerPushVirtual.setInterval(500L, tryPushV50);
+    timerPushVirtual.setInterval(500L, tryPushV55);
   }
 }
 
@@ -122,7 +123,7 @@ void loop() {
     checkButton();
     checkTwitter();
     checkSerialInput();
-    timerV50.run();
+    timerPushVirtual.run();
   } else {
     Serial.println(F("Blynk Disconnected"));
     showRGB(255, 0, 0, 255);
@@ -596,6 +597,17 @@ BLYNK_WRITE(V52) {
   } else {
     pushADC = false;
     Serial.println(F("Push V50 Off"));
+  }
+}
+
+int pinD5Value = 0;
+//Push D5 to a virtual pin
+void tryPushV55() {
+  int v = digitalRead(5);
+  if (v != pinD5Value) {
+    Blynk.virtualWrite(V55, v);
+    pinD5Value = v;
+    Serial.println(F("V55 pushed!"));
   }
 }
 

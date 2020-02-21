@@ -580,17 +580,15 @@ void tryPushV50() {
 
 BLYNK_WRITE(V51) {
   adcLower = param.asInt();
-  if (adcLower < adcHigher) {
-    pushADC = true;
-    Serial.println(F("Push V50 On"));
-  } else {
-    pushADC = false;
-    Serial.println(F("Push V50 Off"));
-  }
+  checkV50Bounds();
 }
 
 BLYNK_WRITE(V52) {
   adcHigher = param.asInt();
+  checkV50Bounds();
+}
+
+void checkV50Bounds() {
   if (adcLower < adcHigher) {
     pushADC = true;
     Serial.println(F("Push V50 On"));

@@ -90,6 +90,7 @@ void setup() {
     showRGB(0, 255, 0, 30);
     timerPushVirtual.setInterval(500L, tryPushV50);
   }
+  Serial.println(F("v1.1"));
 }
 
 BLYNK_CONNECTED() {

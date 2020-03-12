@@ -65,6 +65,7 @@ void setup() {
   delay(5000);
 
   Serial.println(WiFi.macAddress());
+  Serial.println(F("v1.1"));
   settings[0] = getFile(BLYNK_AUTH_SPIFF_FILE);
   settings[1] = getFile(SSID_SPIFF_FILE);
   settings[2] = getFile(PASS_SPIFF_FILE);
@@ -90,7 +91,6 @@ void setup() {
     showRGB(0, 255, 0, 30);
     timerPushVirtual.setInterval(500L, tryPushV50);
   }
-  Serial.println(F("v1.1"));
 }
 
 BLYNK_CONNECTED() {

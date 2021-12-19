@@ -25,12 +25,14 @@ Adafruit_NeoPixel rgb = Adafruit_NeoPixel(1, 4, NEO_GRB + NEO_KHZ800);
 
 bool configured = false;
 String boardName = "BlynkUCI";
-String settings[] = {"", "", ""};//token, ssid, pass
+String settings[] = {"", "", "", "", ""};//token, ssid, pass, url, port
 
 const int EEPROM_CONFIG_FLAG_ADDRESS = 0;
 const String BLYNK_AUTH_SPIFF_FILE = "/blynk.txt";
 const String SSID_SPIFF_FILE = "/ssid.txt";
 const String PASS_SPIFF_FILE = "/pass.txt";
+const String URL_SPIFF_FILE = "/url.txt";
+const String PORT_SPIFF_FILE = "/port.txt";
 const int BLYNK_AUTH_TOKEN_SIZE = 32;
 
 Ticker v9Ticker;
@@ -65,10 +67,12 @@ void setup() {
   delay(5000);
 
   Serial.println(WiFi.macAddress());
-  Serial.println(F("v1.1"));
+  Serial.println(F("v1.2"));
   settings[0] = getFile(BLYNK_AUTH_SPIFF_FILE);
   settings[1] = getFile(SSID_SPIFF_FILE);
   settings[2] = getFile(PASS_SPIFF_FILE);
+  settings[3] = getFile(URL_SPIFF_FILE);
+  settings[4] = getFile(PORT_SPIFF_FILE);
   if (settings[0] != "") {
     Serial.print(F("Your current auth token is: "));
     Serial.println(settings[0]);
@@ -87,7 +91,7 @@ void setup() {
     delay(3000);
     Serial.println(F("Please enter your auth token and wifi info:"));
   } else {
-    Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str());
+    Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str(), settings[3].c_str(), atoi(settings[4].c_str()));
     showRGB(0, 255, 0, 30);
     timerPushVirtual.setInterval(500L, tryPushV50);
   }
@@ -108,10 +112,14 @@ void loop() {
       writeBlynkSettings(settings[0], BLYNK_AUTH_SPIFF_FILE);
       writeBlynkSettings(settings[1], SSID_SPIFF_FILE);
       writeBlynkSettings(settings[2], PASS_SPIFF_FILE);
+      writeBlynkSettings(settings[3], URL_SPIFF_FILE);
+      writeBlynkSettings(settings[4], PORT_SPIFF_FILE);
       Serial.println(settings[0]);
       Serial.println(settings[1]);
       Serial.println(settings[2]);
-      Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str());
+      Serial.println(settings[3]);
+      Serial.println(settings[4]);
+      Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str(), settings[3].c_str(), atoi(settings[4].c_str()));
       showRGB(0, 255, 0, 30);
       configured = true;
     }
@@ -652,7 +660,7 @@ void parseString(String message) {
       message = message.substring(commaPosition + 1, message.length());
       index += 1;
     }
-  } while (commaPosition >= 0 && index < 3);
+  } while (commaPosition >= 0 && index < 5);
 }
 
 void resetConfig() {

@@ -11,7 +11,7 @@
 4. Open the Serial Monitor from Arduino IDE (make sure you are using the right port name and baud 9600)
 <img width="400" src="https://user-images.githubusercontent.com/4184020/68332893-62ba0100-008c-11ea-84b6-a1e996bc948d.png"/>
 
-5. Make sure the RGB LED is blue, then enter your Blynk Token, WiFi SSID Name, Password, Server Address and Port for the WiFi (separated by comma) at the top input field of the monitor, then click "Send"
+5. Make sure the RGB LED is blue, then enter your Blynk Token, WiFi SSID Name, Password for your WiFi, the Address and Port of your intended Blynk server (all separated by comma) at the top input field of the monitor, then click "Send"
 <img width="400" src="https://user-images.githubusercontent.com/4184020/68333221-fd1a4480-008c-11ea-858c-a7bdf1bfd243.png"/>
 
 

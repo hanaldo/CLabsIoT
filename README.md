@@ -23,6 +23,6 @@
 ## Reset
 1. Power on the board by your computer through USB cable
 
-2. Keep pressing the 0 button immediately, hold until the RGB LED changes from White to Blue
+2. Keep pressing the 0 button IMMEDIATELY, hold until the RGB LED changes from White to Blue
 
 3. Then repeat the steps 4 to 7 from "Initial Setup"

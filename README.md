@@ -12,11 +12,11 @@
 <img width="400" src="https://user-images.githubusercontent.com/4184020/68332893-62ba0100-008c-11ea-84b6-a1e996bc948d.png"/>
 
 5. Make sure the RGB LED is blue, then enter your Blynk Token, WiFi SSID Name, Password for your WiFi, the Address and Port of your intended Blynk server (all separated by comma) at the top input field of the monitor, then click "Send"
-<img width="400" src="https://user-images.githubusercontent.com/4184020/68333221-fd1a4480-008c-11ea-858c-a7bdf1bfd243.png"/>
+<img width="400" src="https://user-images.githubusercontent.com/4184020/149072601-09f14ea4-7e35-4863-a153-ec78b89c8fd9.png"/>
 
 
 6. You should see...
-<img width="400" src="https://user-images.githubusercontent.com/4184020/68334121-ccd3a580-008e-11ea-8958-b5b5842959bd.png"/>
+<img width="400" src="https://user-images.githubusercontent.com/4184020/149072665-cbbb0f16-5772-430b-8971-40a12c091ca5.png"/>
 
 7. Unplug your board
 

@@ -1,4 +1,4 @@
-# CLabs Sparkfun Blynk Board
+# CLabs Sparkfun Blynk Board v1.2
 
 ## Initial Setup
 1. Install [Arduino IDE](https://www.arduino.cc/en/Main/Software) on your computer

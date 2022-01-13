@@ -1,7 +1,8 @@
 /*
   My_Blynk.ino
   Improved firmware for Sparkfun Blynk board.
-  Compile with ESP8266 core v2.4.2 and Blynk library v0.6.1
+  Compile with ESP8266 core v2.4.2 and Blynk library v0.6.1 (Fully Tested).
+  Can compile with ESP8266 core v3.0.2 and Blynk library v1.0.1 (Not Fully Tested Yet).
 
   Author: Shenshen Han @ Creativity Labs
 

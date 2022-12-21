@@ -1,8 +1,7 @@
 /*
   My_Blynk.ino
   Improved firmware for Sparkfun Blynk board.
-  Compile with ESP8266 core v2.4.2 and Blynk library v0.6.1 (Fully Tested).
-  Can compile with ESP8266 core v3.0.2 and Blynk library v1.0.1 (Not Fully Tested Yet).
+  Compile with ESP8266 core v3.0.2, Blynk library v1.1.0, Adafruit NeoPixel 1.10.7, SparkFun HTU21D 1.1.3 (Fully Tested Yet).
 
   Author: Shenshen Han @ Creativity Labs
 
@@ -26,7 +25,7 @@ Adafruit_NeoPixel rgb = Adafruit_NeoPixel(1, 4, NEO_GRB + NEO_KHZ800);
 
 bool configured = false;
 String boardName = "BlynkUCI";
-String settings[] = {"", "", "", "", ""};//token, ssid, pass, url, port
+String settings[] = { "", "", "", "", "" };  //token, ssid, pass, url, port
 
 const int EEPROM_CONFIG_FLAG_ADDRESS = 0;
 const String BLYNK_AUTH_SPIFF_FILE = "/blynk.txt";
@@ -50,8 +49,8 @@ BlynkTimer timerPushVirtual;
 
 WidgetLED ledV1(V1);
 WidgetLCD thLCD(V10);
-WidgetTerminal terminal(V21);//SERIAL_VIRTUAL
-WidgetTerminal chat(V30);//SERIAL_VIRTUAL
+WidgetTerminal terminal(V21);  //SERIAL_VIRTUAL
+WidgetTerminal chat(V30);      //SERIAL_VIRTUAL
 
 void setup() {
   Serial.begin(9600);
@@ -68,7 +67,7 @@ void setup() {
   delay(5000);
 
   Serial.println(WiFi.macAddress());
-  Serial.println(F("v1.2"));
+  Serial.println(F("v2.0"));
   settings[0] = getFile(BLYNK_AUTH_SPIFF_FILE);
   settings[1] = getFile(SSID_SPIFF_FILE);
   settings[2] = getFile(PASS_SPIFF_FILE);
@@ -94,7 +93,7 @@ void setup() {
   } else {
     Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str(), settings[3].c_str(), atoi(settings[4].c_str()));
     showRGB(0, 255, 0, 30);
-    timerPushVirtual.setInterval(500L, tryPushV50);
+    timerPushVirtual.setInterval(1000L, pushVirtualPins);
   }
 }
 
@@ -196,13 +195,13 @@ BLYNK_WRITE(V15) {
   updateRGB();
 }
 
-float tempCOffset = -8.33; //-8.33;
+float tempCOffset = -8.33;  //-8.33;
 float tempCUpperLimit = 27;
 
 //TEMPERATURE_C_VIRTUAL
 BLYNK_READ(V6) {
   float tempC = therSense.readTemperature();
-  tempC += tempCOffset; // Add any offset
+  tempC += tempCOffset;  // Add any offset
   Blynk.virtualWrite(V6, tempC);
 #ifdef DEBUG
   Serial.println(F("TempC:V6"));
@@ -210,7 +209,7 @@ BLYNK_READ(V6) {
 }
 
 //TEMPERATURE_F_VIRTUAL
-BLYNK_READ(V5) {
+void pushV5() {
   float tempC = therSense.readTemperature();
   tempC += tempCOffset;
   float tempF = tempC * 9.0 / 5.0 + 32.0;
@@ -230,8 +229,7 @@ BLYNK_READ(V7) {
 }
 
 //ADC_VOLTAGE_VIRTUAL
-BLYNK_READ(V8) {
-  float adcRaw = analogRead(A0);//A0 - ADC
+void pushV8(int adcRaw) {
   float voltage = ((float)adcRaw / 1024.0) * 3.2;
   Blynk.virtualWrite(V8, voltage);
 #ifdef DEBUG
@@ -242,8 +240,8 @@ BLYNK_READ(V8) {
 //ADC_BATT_VIRTUAL
 BLYNK_READ(V20) {
   int rawADC = analogRead(A0);
-  float voltage = ((float) rawADC / 1024.0) * 3.2;
-  voltage *= 2.0; // Assume dividing VIN by two with another divider
+  float voltage = ((float)rawADC / 1024.0) * 3.2;
+  voltage *= 2.0;  // Assume dividing VIN by two with another divider
   Blynk.virtualWrite(V20, voltage);
 }
 
@@ -362,11 +360,11 @@ BLYNK_WRITE(V13) {
   }
 }
 
-unsigned int servoMax = 180; // Default maximum servo angle
+unsigned int servoMax = 180;  // Default maximum servo angle
 const int SERVO_MINIMUM = 5;
-int servoX = 0; // Servo angle x component
-int servoY = 0; // Servo angle y component
-Servo myServo; // Servo object
+int servoX = 0;  // Servo angle x component
+int servoY = 0;  // Servo angle y component
+Servo myServo;   // Servo object
 bool firstServoRun = true;
 
 //SERVO_XY_VIRTUAL
@@ -377,18 +375,20 @@ BLYNK_WRITE(V14) {
     firstServoRun = false;
   }
   int servoXIn = param[0].asInt();
+  Serial.println(String(servoXIn));
   int servoYIn = param[1].asInt();
-  servoX = servoXIn - 128; // Center xIn around 0 (+/-128)
-  servoY = servoYIn - 128; // Center xIn around 0 (+/-128)
+  Serial.println(String(servoYIn));
+  servoX = servoXIn - 128;  // Center xIn around 0 (+/-128)
+  servoY = servoYIn - 128;  // Center xIn around 0 (+/-128)
   // Calculate the angle, given x and y components:
-  float pos = atan2(servoY, servoX) * 180.0 / PI; // Convert to degrees
+  float pos = atan2(servoY, servoX) * 180.0 / PI;  // Convert to degrees
   // atan2 will give us an angle +/-180
   if (pos < 0) {
     pos = 360.0 + pos;
   }
   int servoPos = map(pos, 0, 360, 5, servoMax);
   myServo.write(servoPos);
-  Blynk.virtualWrite(V17, servoPos);//SERVO_ANGLE_VIRUTAL
+  Blynk.virtualWrite(V17, servoPos);  //SERVO_ANGLE_VIRUTAL
   Serial.print(F("ServoPosition: "));
   Serial.println(String(servoPos));
 }
@@ -415,7 +415,7 @@ uint8_t lastSwitchState = 255;
 
 //DOOR_STATE_VIRTUAL
 BLYNK_READ(V25) {
-  uint8_t switchState = digitalRead(16);//DOOR_SWITCH_PIN
+  uint8_t switchState = digitalRead(16);  //DOOR_SWITCH_PIN
   if (switchState) {
     Blynk.virtualWrite(V25, "Close");
   } else {
@@ -471,12 +471,12 @@ BLYNK_WRITE(V27) {
 }
 
 void sendEmail() {
-  String emailSubject = "My BlynkBoard Statistics"; // Set the subject
-  String emailMessage = ""; // Create a message string
-  emailMessage += "A0: " + String(analogRead(A0)) + "<br/>"; // Add A0 reading
+  String emailSubject = "My BlynkBoard Statistics";           // Set the subject
+  String emailMessage = "";                                   // Create a message string
+  emailMessage += "A0: " + String(analogRead(A0)) + "<br/>";  // Add A0 reading
   emailMessage += "<br/>";
-  emailMessage += "Temp: " + String(therSense.readTemperature()) + "C<br/>"; // Add temp sensor
-  emailMessage += "Humidity: " + String(therSense.readHumidity()) + "%<br/>"; // Add humidity sensor
+  emailMessage += "Temp: " + String(therSense.readTemperature()) + "C<br/>";   // Add temp sensor
+  emailMessage += "Humidity: " + String(therSense.readHumidity()) + "%<br/>";  // Add humidity sensor
   emailMessage += "<br/>";
   emailMessage += "Runtime: " + String(millis() / 1000) + "s";
   emailMessage += "<br/><hr/><div style='display:none;'>ubicom2020</div>";
@@ -566,15 +566,20 @@ unsigned long lashPushV50 = 0;
 bool sentV50Once = false;
 
 //Push ADC to a virtual pin
-void tryPushV50() {
-  if (!pushADC) {
-    return;
-  }
+void pushVirtualPins() {
+#ifdef DEBUG
+  Serial.println(F("Push Virtual"));
+#endif
+  int adcRaw = analogRead(A0);  //A0 - ADC
+  Blynk.virtualWrite(V0, adcRaw);
+  pushV8(adcRaw);
+  pushV5();
+
   unsigned long now = millis();
-  if (now - lashPushV50 < 5000) {//5s protection
+  if (now - lashPushV50 < 5000) {  //5s protection
     return;
   }
-  int adcRaw = analogRead(A0);//A0 - ADC
+
   if (adcRaw > adcLower && adcRaw < adcHigher) {
     if (!sentV50Once) {
       Blynk.virtualWrite(V50, adcRaw);
@@ -642,8 +647,7 @@ String getFile(String fileName) {
       }
       file.close();
     }
-  }
-  else {
+  } else {
     Serial.println(F("No setting file."));
   }
   return content;

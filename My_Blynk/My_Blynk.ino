@@ -196,7 +196,7 @@ float tempCOffset = -8.33;  //-8.33;
 float tempCUpperLimit = 27;
 
 //TEMPERATURE_C_VIRTUAL
-BLYNK_READ(V6) {
+void pushV6() {
   float tempC = therSense.readTemperature();
   tempC += tempCOffset;  // Add any offset
   Blynk.virtualWrite(V6, tempC);
@@ -217,7 +217,7 @@ void pushV5() {
 }
 
 //HUMIDITY_VIRTUAL
-BLYNK_READ(V7) {
+void pushV7() {
   float humidity = therSense.readHumidity();
   Blynk.virtualWrite(V7, humidity);
 #ifdef DEBUG
@@ -386,8 +386,6 @@ BLYNK_WRITE(V14) {
   int servoPos = map(pos, 0, 360, 5, servoMax);
   myServo.write(servoPos);
   Blynk.virtualWrite(V17, servoPos);  //SERVO_ANGLE_VIRUTAL
-  Serial.print(F("ServoPosition: "));
-  Serial.println(String(servoPos));
 }
 
 //SERVO_MAX_VIRTUAL
@@ -421,6 +419,8 @@ void pushVirtualPins() {
   Blynk.virtualWrite(V0, adcRaw);
   pushV8(adcRaw);
   pushV5();
+  pushV6();
+  pushV7();
 }
 
 //=================================================================================================================================

@@ -39,9 +39,7 @@ Ticker v9Ticker;
 const int BUTTON_PIN = 0;
 int buttonPinValue = 0;
 int buttonPinValueOld = 0;
-long ramTimer = 0;
 int rainbowCounter = 0;
-int emailEnableIn = 0;
 BlynkTimer timerPushVirtual;
 
 WidgetLED ledV1(V1);
@@ -372,9 +370,7 @@ BLYNK_WRITE(V14) {
     firstServoRun = false;
   }
   int servoXIn = param[0].asInt();
-  Serial.println(String(servoXIn));
   int servoYIn = param[1].asInt();
-  Serial.println(String(servoYIn));
   servoX = servoXIn - 128;  // Center xIn around 0 (+/-128)
   servoY = servoYIn - 128;  // Center xIn around 0 (+/-128)
   // Calculate the angle, given x and y components:
@@ -396,18 +392,15 @@ BLYNK_WRITE(V16) {
   Serial.println(String(servoMax));
 }
 
-BLYNK_READ(V18) {
-  int lightADC = analogRead(A0);
-  Blynk.virtualWrite(V18, lightADC);
-#ifdef DEBUG
-  Serial.println(F("Light:V18"));
-#endif
-}
-
 BLYNK_WRITE(V30) {
   String incoming = param.asStr();
   Serial.print(F("V30: "));
   Serial.println(incoming);
+}
+
+void pushV20() {
+  int switchState = digitalRead(16);  //DOOR_SWITCH_PIN
+  Blynk.virtualWrite(V20, switchState);
 }
 
 //Push ADC to a virtual pin
@@ -421,6 +414,7 @@ void pushVirtualPins() {
   pushV5();
   pushV6();
   pushV7();
+  pushV20();
 }
 
 //=================================================================================================================================

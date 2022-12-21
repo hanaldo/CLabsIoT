@@ -42,21 +42,18 @@ int buttonPinValueOld = 0;
 long ramTimer = 0;
 int rainbowCounter = 0;
 int emailEnableIn = 0;
-int adcLower = 0;
-int adcHigher = 0;
-bool pushADC = false;
 BlynkTimer timerPushVirtual;
 
 WidgetLED ledV1(V1);
 WidgetLCD thLCD(V10);
-WidgetTerminal terminal(V21);  //SERIAL_VIRTUAL
-WidgetTerminal chat(V30);      //SERIAL_VIRTUAL
+WidgetTerminal chat(V30);  //SERIAL_VIRTUAL
 
 void setup() {
   Serial.begin(9600);
   rgb.begin();
   pinMode(16, INPUT_PULLDOWN_16);
   pinMode(BUTTON_PIN, INPUT);
+  pinMode(12, INPUT);
   therSense.begin();
   if (!SPIFFS.begin()) {
     Serial.println(F("Failed to initialize SPIFFS"));
@@ -130,7 +127,6 @@ void loop() {
   Blynk.run();
   if (Blynk.connected()) {
     checkButton();
-    checkTwitter();
     checkSerialInput();
     timerPushVirtual.run();
   } else {
@@ -410,161 +406,11 @@ BLYNK_READ(V18) {
 #endif
 }
 
-#define NOTIFICATION_LIMIT 5000
-unsigned long lastDoorSwitchNotification = 0;
-uint8_t lastSwitchState = 255;
-
-//DOOR_STATE_VIRTUAL
-BLYNK_READ(V25) {
-  uint8_t switchState = digitalRead(16);  //DOOR_SWITCH_PIN
-  if (switchState) {
-    Blynk.virtualWrite(V25, "Close");
-  } else {
-    Blynk.virtualWrite(V25, "Open");
-  }
-  if (lastSwitchState != switchState) {
-    if (switchState) {
-      Serial.println(F("Door closed"));
-      if (lastDoorSwitchNotification && (lastDoorSwitchNotification + NOTIFICATION_LIMIT > millis())) {
-        int timeLeft = (lastDoorSwitchNotification + NOTIFICATION_LIMIT - millis()) / 1000;
-        terminal.println("Door closed. Can't notify for " + String(timeLeft) + "s.");
-        terminal.flush();
-      } else {
-        Blynk.notify("Door closed\r\nFrom: " + boardName + "\r\n[" + String(millis()) + "]");
-        terminal.println("Door closed!");
-        terminal.flush();
-        lastDoorSwitchNotification = millis();
-      }
-    } else {
-      Serial.println(F("Door opened"));
-      if (lastDoorSwitchNotification && (lastDoorSwitchNotification + NOTIFICATION_LIMIT > millis())) {
-        int timeLeft = (lastDoorSwitchNotification + NOTIFICATION_LIMIT - millis()) / 1000;
-        terminal.println("Door open. Can't notify for " + String(timeLeft) + "s");
-        terminal.flush();
-      } else {
-        Blynk.notify("Door open\r\nFrom: " + boardName + "\r\n[" + String(millis()) + "]");
-        terminal.println("Door opened!");
-        terminal.flush();
-        lastDoorSwitchNotification = millis();
-      }
-    }
-    lastSwitchState = switchState;
-  }
-}
-
-#define EMAIL_UPDATE_RATE 5000
-unsigned long lastEmailUpdate = 0;
-
-//EMAIL_ENABLED_VIRTUAL
-BLYNK_WRITE(V27) {
-  emailEnableIn = param.asInt();
-  if (emailEnableIn) {
-    if ((lastEmailUpdate == 0) || (lastEmailUpdate + EMAIL_UPDATE_RATE < millis())) {
-      sendEmail();
-      lastEmailUpdate = millis();
-    } else {
-      int waitTime = (lastEmailUpdate + EMAIL_UPDATE_RATE) - millis();
-      waitTime /= 1000;
-      terminal.println("Please wait " + String(waitTime) + " seconds");
-      terminal.flush();
-    }
-  }
-}
-
-void sendEmail() {
-  String emailSubject = "My BlynkBoard Statistics";           // Set the subject
-  String emailMessage = "";                                   // Create a message string
-  emailMessage += "A0: " + String(analogRead(A0)) + "<br/>";  // Add A0 reading
-  emailMessage += "<br/>";
-  emailMessage += "Temp: " + String(therSense.readTemperature()) + "C<br/>";   // Add temp sensor
-  emailMessage += "Humidity: " + String(therSense.readHumidity()) + "%<br/>";  // Add humidity sensor
-  emailMessage += "<br/>";
-  emailMessage += "Runtime: " + String(millis() / 1000) + "s";
-  emailMessage += "<br/><hr/><div style='display:none;'>ubicom2020</div>";
-  Blynk.email(emailSubject.c_str(), emailMessage.c_str());
-  terminal.println("Email sent at " + String(millis() / 1000) + "s");
-  terminal.flush();
-  Serial.println(F("Emailed"));
-}
-
 BLYNK_WRITE(V30) {
   String incoming = param.asStr();
   Serial.print(F("V30: "));
   Serial.println(incoming);
 }
-
-BLYNK_WRITE(V21) {
-  String incoming = param.asStr();
-  Serial.print(F("V21: "));
-  Serial.println(incoming);
-
-  if (incoming.charAt(0) == '$') {
-    String newName = incoming.substring(1, incoming.length());
-    newName.trim();
-    boardName = newName;
-    terminal.println("Board name set to: " + boardName + ".");
-    terminal.flush();
-  } else {
-    terminal.println(F("Unrecognized command!"));
-    terminal.flush();
-  }
-}
-
-unsigned long tweetRate = 0;
-unsigned long lastTweet = 0;
-unsigned int moistureThreshold = 900;
-
-//TWITTER_THRESHOLD_VIRTUAL
-BLYNK_WRITE(V23) {
-  moistureThreshold = param.asInt();
-  String msg = "Moisture Threshold is set to: " + String(moistureThreshold) + ".\r\n";
-  terminal.println(msg);
-  terminal.flush();
-  Serial.println(moistureThreshold);
-  lastTweet = millis();
-}
-
-//TWITTER_RATE_VIRTUAL
-BLYNK_WRITE(V24) {
-  int r = param.asInt();
-  if (r < 10) {
-    r = 0;
-  }
-  tweetRate = r * 1000;
-  String msg = "Tweet Rate is set to: " + String(r) + " seconds.\r\n";
-  terminal.println(msg);
-  terminal.flush();
-  Serial.println(tweetRate);
-  lastTweet = millis();
-}
-
-void checkTwitter() {
-  if (tweetRate <= 0) {
-    return;
-  }
-  unsigned long now = millis();
-  if (now - lastTweet < tweetRate) {
-    return;
-  }
-  lastTweet = now;
-  unsigned int moisture = analogRead(A0);
-  if (moisture >= moistureThreshold) {
-    return;
-  }
-  String msg = boardName + " thirsty!\r\nSoil reading: " + String(moisture) + ".\r\n";
-  msg += "[" + String(millis()) + "]";
-  Blynk.tweet(msg);
-  Serial.println(F("tweet"));
-
-  if (!emailEnableIn) {
-    return;
-  }
-  sendEmail();
-  lastEmailUpdate = millis();
-}
-
-unsigned long lashPushV50 = 0;
-bool sentV50Once = false;
 
 //Push ADC to a virtual pin
 void pushVirtualPins() {
@@ -575,42 +421,6 @@ void pushVirtualPins() {
   Blynk.virtualWrite(V0, adcRaw);
   pushV8(adcRaw);
   pushV5();
-
-  unsigned long now = millis();
-  if (now - lashPushV50 < 5000) {  //5s protection
-    return;
-  }
-
-  if (adcRaw > adcLower && adcRaw < adcHigher) {
-    if (!sentV50Once) {
-      Blynk.virtualWrite(V50, adcRaw);
-      sentV50Once = true;
-      lashPushV50 = now;
-      Serial.println(F("V50 pushed!"));
-    }
-  } else {
-    sentV50Once = false;
-  }
-}
-
-BLYNK_WRITE(V51) {
-  adcLower = param.asInt();
-  checkV50Bounds();
-}
-
-BLYNK_WRITE(V52) {
-  adcHigher = param.asInt();
-  checkV50Bounds();
-}
-
-void checkV50Bounds() {
-  if (adcLower < adcHigher) {
-    pushADC = true;
-    Serial.println(F("Push V50 On"));
-  } else {
-    pushADC = false;
-    Serial.println(F("Push V50 Off"));
-  }
 }
 
 //=================================================================================================================================

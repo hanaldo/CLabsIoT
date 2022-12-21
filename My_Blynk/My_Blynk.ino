@@ -56,6 +56,7 @@ void setup() {
   Serial.begin(9600);
   rgb.begin();
   pinMode(16, INPUT_PULLDOWN_16);
+  pinMode(BUTTON_PIN, INPUT);
   therSense.begin();
   if (!SPIFFS.begin()) {
     Serial.println(F("Failed to initialize SPIFFS"));

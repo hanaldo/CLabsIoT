@@ -1,7 +1,7 @@
 /*
   My_Blynk.ino
   Improved firmware for Sparkfun Blynk board.
-  Compile with ESP8266 core v3.0.2, Blynk library v1.1.0, Adafruit NeoPixel 1.10.7, SparkFun HTU21D 1.1.3 (Fully Tested Yet).
+  Compile with ESP8266 core v3.0.2, Blynk library v1.1.0, Adafruit NeoPixel 1.10.7, SparkFun HTU21D 1.1.3 (Fully Tested).
 
   Author: Shenshen Han @ Creativity Labs
 
@@ -24,7 +24,6 @@ HTU21D therSense;
 Adafruit_NeoPixel rgb = Adafruit_NeoPixel(1, 4, NEO_GRB + NEO_KHZ800);
 
 bool configured = false;
-String boardName = "BlynkUCI";
 String settings[] = { "", "", "", "", "" };  //token, ssid, pass, url, port
 
 const int EEPROM_CONFIG_FLAG_ADDRESS = 0;
@@ -42,7 +41,6 @@ int buttonPinValueOld = 0;
 int rainbowCounter = 0;
 BlynkTimer timerPushVirtual;
 
-WidgetLED ledV1(V1);
 WidgetLCD thLCD(V10);
 WidgetTerminal chat(V30);  //SERIAL_VIRTUAL
 
@@ -51,7 +49,6 @@ void setup() {
   rgb.begin();
   pinMode(16, INPUT_PULLDOWN_16);
   pinMode(BUTTON_PIN, INPUT);
-  pinMode(12, INPUT);
   therSense.begin();
   if (!SPIFFS.begin()) {
     Serial.println(F("Failed to initialize SPIFFS"));
@@ -140,9 +137,9 @@ void checkButton() {
     Serial.print(F("Button: "));
     Serial.println(buttonPinValue);
     if (buttonPinValue) {
-      ledV1.off();
+      Blynk.virtualWrite(V1, 0);
     } else {
-      ledV1.on();
+      Blynk.virtualWrite(V1, 255);
     }
   }
 }

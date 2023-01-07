@@ -1,7 +1,7 @@
 /*
   My_Blynk.ino
   Improved firmware for Sparkfun Blynk board.
-  Compile with ESP8266 core v3.0.2, Blynk library v1.1.0, Adafruit NeoPixel 1.10.7, SparkFun HTU21D 1.1.3 (Fully Tested).
+  Compile with ESP8266 core v3.1.0, Blynk library v1.1.0, Adafruit NeoPixel 1.10.7, SparkFun HTU21D 1.1.3 (Fully Tested).
 
   Author: Shenshen Han @ Creativity Labs
 
@@ -393,6 +393,11 @@ BLYNK_WRITE(V30) {
   String incoming = param.asStr();
   Serial.print(F("V30: "));
   Serial.println(incoming);
+}
+
+BLYNK_WRITE(V39) {
+  Serial.print(F("V39 Webhook"));
+  Blynk.virtualWrite(V40, param.asStr());  //Relay the message to trigger webhook
 }
 
 void pushV20() {

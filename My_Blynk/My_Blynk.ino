@@ -230,12 +230,12 @@ void pushV8(int adcRaw) {
 }
 
 //ADC_BATT_VIRTUAL
-BLYNK_READ(V20) {
-  int rawADC = analogRead(A0);
-  float voltage = ((float)rawADC / 1024.0) * 3.2;
-  voltage *= 2.0;  // Assume dividing VIN by two with another divider
-  Blynk.virtualWrite(V20, voltage);
-}
+// BLYNK_READ(V20) {
+//   int rawADC = analogRead(A0);
+//   float voltage = ((float)rawADC / 1024.0) * 3.2;
+//   voltage *= 2.0;  // Assume dividing VIN by two with another divider
+//   Blynk.virtualWrite(V20, voltage);
+// }
 
 BLYNK_WRITE(V9) {
   int pinValue = param.asInt();
@@ -400,9 +400,13 @@ BLYNK_WRITE(V39) {
   Blynk.virtualWrite(V40, param.asStr());  //Relay the message to trigger webhook
 }
 
+int switchState = 0;
 void pushV20() {
-  int switchState = digitalRead(16);  //DOOR_SWITCH_PIN
-  Blynk.virtualWrite(V20, switchState);
+  int state = digitalRead(16);  //DOOR_SWITCH_PIN
+  if (state != switchState) {
+    Blynk.virtualWrite(V20, state);
+    switchState = state;
+  }
 }
 
 //Push ADC to a virtual pin

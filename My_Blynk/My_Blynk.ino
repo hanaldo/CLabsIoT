@@ -396,7 +396,7 @@ BLYNK_WRITE(V30) {
 }
 
 BLYNK_WRITE(V39) {
-  Serial.print(F("V39 Webhook"));
+  Serial.println(F("V39 Webhook"));
   Blynk.virtualWrite(V40, param.asStr());  //Relay the message to trigger webhook
 }
 

@@ -356,6 +356,7 @@ BLYNK_WRITE(V24) {
   }
   int servoPos = param.asInt();
   myServo.write(servoPos);
+  Blynk.virtualWrite(V17, servoPos);  //SERVO_ANGLE_VIRUTAL
   //Serial.println(servoPos);
 }
 

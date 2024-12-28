@@ -368,13 +368,15 @@ void pushV20() {
   }
 }
 
-BLYNK_WRITE(V40) {
+BLYNK_WRITE(V50) {
   int pinValue = param.asInt();
   if (pinValue > 0) {
     pushOn = 1;
   } else {
     pushOn = 0;
   }
+  Serial.println(F("Push On"));
+  Serial.println(pushOn);
 }
 
 //Push ADC to a virtual pin

@@ -60,7 +60,7 @@ void setup() {
   delay(5000);
 
   Serial.println(WiFi.macAddress());
-  Serial.println(F("v2.0"));
+  Serial.println(F("v2.1"));
   settings[0] = getFile(BLYNK_AUTH_SPIFF_FILE);
   settings[1] = getFile(SSID_SPIFF_FILE);
   settings[2] = getFile(PASS_SPIFF_FILE);
@@ -229,14 +229,6 @@ void pushV8(int adcRaw) {
 #endif
 }
 
-//ADC_BATT_VIRTUAL
-// BLYNK_READ(V20) {
-//   int rawADC = analogRead(A0);
-//   float voltage = ((float)rawADC / 1024.0) * 3.2;
-//   voltage *= 2.0;  // Assume dividing VIN by two with another divider
-//   Blynk.virtualWrite(V20, voltage);
-// }
-
 BLYNK_WRITE(V9) {
   int pinValue = param.asInt();
   if (pinValue == 0) {
@@ -352,41 +344,19 @@ BLYNK_WRITE(V13) {
   }
 }
 
-unsigned int servoMax = 180;  // Default maximum servo angle
-const int SERVO_MINIMUM = 5;
-int servoX = 0;  // Servo angle x component
-int servoY = 0;  // Servo angle y component
-Servo myServo;   // Servo object
+Servo myServo;  // Servo object
 bool firstServoRun = true;
 
-//SERVO_XY_VIRTUAL
-BLYNK_WRITE(V14) {
+//Servo with Integer Input
+BLYNK_WRITE(V24) {
   if (firstServoRun) {
     myServo.attach(15);
-    myServo.write(15);
+    myServo.write(15);  //angle: the value to write to the servo, from 0 to 180
     firstServoRun = false;
   }
-  int servoXIn = param[0].asInt();
-  int servoYIn = param[1].asInt();
-  servoX = servoXIn - 128;  // Center xIn around 0 (+/-128)
-  servoY = servoYIn - 128;  // Center xIn around 0 (+/-128)
-  // Calculate the angle, given x and y components:
-  float pos = atan2(servoY, servoX) * 180.0 / PI;  // Convert to degrees
-  // atan2 will give us an angle +/-180
-  if (pos < 0) {
-    pos = 360.0 + pos;
-  }
-  int servoPos = map(pos, 0, 360, 5, servoMax);
+  int servoPos = param.asInt();
   myServo.write(servoPos);
-  Blynk.virtualWrite(V17, servoPos);  //SERVO_ANGLE_VIRUTAL
-}
-
-//SERVO_MAX_VIRTUAL
-BLYNK_WRITE(V16) {
-  int sMax = param.asInt();
-  servoMax = constrain(sMax, SERVO_MINIMUM + 1, 360);
-  Serial.print(F("ServoMax: "));
-  Serial.println(String(servoMax));
+  //Serial.println(servoPos);
 }
 
 BLYNK_WRITE(V30) {

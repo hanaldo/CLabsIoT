@@ -10,7 +10,6 @@
   Please see the included LICENSE.txt for more information.
 */
 #define BLYNK_PRINT Serial
-//#define DEBUG
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
 #include <Adafruit_NeoPixel.h>
@@ -40,6 +39,7 @@ int buttonPinValue = 0;
 int buttonPinValueOld = 0;
 int rainbowCounter = 0;
 BlynkTimer timerPushVirtual;
+int pushOn = 0;
 
 WidgetLCD thLCD(V10);
 WidgetTerminal chat(V30);  //SERIAL_VIRTUAL
@@ -86,7 +86,7 @@ void setup() {
   } else {
     Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str(), settings[3].c_str(), atoi(settings[4].c_str()));
     showRGB(0, 255, 0, 30);
-    timerPushVirtual.setInterval(1000L, pushVirtualPins);
+    timerPushVirtual.setInterval(2000L, pushVirtualPins);
   }
 }
 
@@ -195,9 +195,6 @@ void pushV6() {
   float tempC = therSense.readTemperature();
   tempC += tempCOffset;  // Add any offset
   Blynk.virtualWrite(V6, tempC);
-#ifdef DEBUG
-  Serial.println(F("TempC:V6"));
-#endif
 }
 
 //TEMPERATURE_F_VIRTUAL
@@ -206,27 +203,18 @@ void pushV5() {
   tempC += tempCOffset;
   float tempF = tempC * 9.0 / 5.0 + 32.0;
   Blynk.virtualWrite(V5, tempF);
-#ifdef DEBUG
-  Serial.println(F("TempF:V5"));
-#endif
 }
 
 //HUMIDITY_VIRTUAL
 void pushV7() {
   float humidity = therSense.readHumidity();
   Blynk.virtualWrite(V7, humidity);
-#ifdef DEBUG
-  Serial.println(F("Humi:V7"));
-#endif
 }
 
 //ADC_VOLTAGE_VIRTUAL
 void pushV8(int adcRaw) {
   float voltage = ((float)adcRaw / 1024.0) * 3.2;
   Blynk.virtualWrite(V8, voltage);
-#ifdef DEBUG
-  Serial.println(F("Vol:V8"));
-#endif
 }
 
 BLYNK_WRITE(V9) {
@@ -357,7 +345,7 @@ BLYNK_WRITE(V24) {
   int servoPos = param.asInt();
   myServo.write(servoPos);
   Blynk.virtualWrite(V17, servoPos);  //SERVO_ANGLE_VIRUTAL
-  //Serial.println(servoPos);
+  Serial.println(servoPos);
 }
 
 BLYNK_WRITE(V30) {
@@ -380,18 +368,27 @@ void pushV20() {
   }
 }
 
+BLYNK_WRITE(V40) {
+  int pinValue = param.asInt();
+  if (pinValue > 0) {
+    pushOn = 1;
+  } else {
+    pushOn = 0;
+  }
+}
+
 //Push ADC to a virtual pin
 void pushVirtualPins() {
-#ifdef DEBUG
-  Serial.println(F("Push Virtual"));
-#endif
-  int adcRaw = analogRead(A0);  //A0 - ADC
-  Blynk.virtualWrite(V0, adcRaw);
-  pushV8(adcRaw);
-  pushV5();
-  pushV6();
-  pushV7();
-  pushV20();
+  if (pushOn > 0) {
+    Serial.println(F("Push Virtual"));
+    int adcRaw = analogRead(A0);  //A0 - ADC
+    Blynk.virtualWrite(V0, adcRaw);
+    pushV8(adcRaw);
+    pushV5();
+    pushV6();
+    pushV7();
+    pushV20();
+  }
 }
 
 //=================================================================================================================================

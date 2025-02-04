@@ -60,7 +60,7 @@ void setup() {
   delay(5000);
 
   Serial.println(WiFi.macAddress());
-  Serial.println(F("v2.2"));
+  Serial.println(F("v2.3"));
   settings[0] = getFile(BLYNK_AUTH_SPIFF_FILE);
   settings[1] = getFile(SSID_SPIFF_FILE);
   settings[2] = getFile(PASS_SPIFF_FILE);
@@ -338,8 +338,8 @@ bool firstServoRun = true;
 //Servo with Integer Input
 BLYNK_WRITE(V24) {
   if (firstServoRun) {
-    myServo.attach(15);
-    myServo.write(15);  //angle: the value to write to the servo, from 0 to 180
+    myServo.attach(15, 500, 4000);  //https://docs.arduino.cc/libraries/servo/
+    myServo.write(15);              //angle: the value to write to the servo, from 0 to 180
     firstServoRun = false;
   }
   int servoPos = param.asInt();

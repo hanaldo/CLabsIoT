@@ -1,7 +1,7 @@
 /*
   My_Blynk.ino
   Improved firmware for Sparkfun Blynk board.
-  Compile with ESP8266 core v3.1.0, Blynk library v1.1.0, Adafruit NeoPixel 1.10.7, SparkFun HTU21D 1.1.3 (Fully Tested).
+  Compile with ESP8266 core v3.1.2, Blynk library v1.3.2, Adafruit NeoPixel 1.15.2, SparkFun HTU21D 1.1.3.
 
   Author: Shenshen Han @ Creativity Labs
 
@@ -9,6 +9,8 @@
   This is released under the MIT license (http://opensource.org/licenses/MIT).
   Please see the included LICENSE.txt for more information.
 */
+#define BLYNK_TEMPLATE_ID "xxx"
+#define BLYNK_TEMPLATE_NAME "xxx"
 #define BLYNK_PRINT Serial
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
@@ -60,7 +62,7 @@ void setup() {
   delay(5000);
 
   Serial.println(WiFi.macAddress());
-  Serial.println(F("v2.3"));
+  Serial.println(F("v2.4"));
   settings[0] = getFile(BLYNK_AUTH_SPIFF_FILE);
   settings[1] = getFile(SSID_SPIFF_FILE);
   settings[2] = getFile(PASS_SPIFF_FILE);
@@ -86,8 +88,8 @@ void setup() {
   } else {
     Blynk.begin(settings[0].c_str(), settings[1].c_str(), settings[2].c_str(), settings[3].c_str(), atoi(settings[4].c_str()));
     showRGB(0, 255, 0, 30);
-    timerPushVirtual.setInterval(2000L, pushVirtualPins);
   }
+  timerPushVirtual.setInterval(2000L, pushVirtualPins);  //Always start the timer at setup
 }
 
 BLYNK_CONNECTED() {
@@ -381,7 +383,7 @@ BLYNK_WRITE(V50) {
 
 //Push ADC to a virtual pin
 void pushVirtualPins() {
-  if (pushOn > 0) {
+  if (configured && pushOn > 0) {
     Serial.println(F("Push Virtual"));
     int adcRaw = analogRead(A0);  //A0 - ADC
     Blynk.virtualWrite(V0, adcRaw);

@@ -364,6 +364,7 @@ BLYNK_WRITE(V39) {
 int switchState = 0;
 void pushV20() {
   int state = digitalRead(16);  //DOOR_SWITCH_PIN
+  //Serial.println(state);
   if (state != switchState) {
     Blynk.virtualWrite(V20, state);
     switchState = state;
